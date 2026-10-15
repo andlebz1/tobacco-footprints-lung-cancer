@@ -1,0 +1,6 @@
+test,n_ever,n_never,median_ever,median_never,statistic,p_value
+"Mann-Whitney: TMB (mut/Mb), ever vs never",189,32.0,6.816,1.895,5226.0,4.654277391371886e-11
+"Mann-Whitney: C>A fraction, ever vs never",189,32.0,0.36,0.105,5372.0,2.250383079473665e-12
+"Mann-Whitney: SBS4 relative contribution, ever vs never",189,27.0,0.458,0.062,4383.0,1.6178429069359156e-09
+Spearman: pack-years vs SBS4_rel (smokers with data),158,,,,0.196,0.013677330043483182
+Kruskal-Wallis: SBS4_rel across Never/Former/Current,216,,,,40.89,1.3194554473355052e-09

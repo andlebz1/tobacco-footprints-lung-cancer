@@ -1,0 +1,4 @@
+variable,comparison,n_a,n_b,median_a,median_b,p_value
+fraction_genes_altered,TP53: True vs False,100,121.0,0.637,0.477,6.902476844472934e-06
+fraction_genes_altered,ever_smoker: Ever vs Never,189,32.0,0.556,0.47,0.2654445958290703
+fraction_genes_altered vs TMB,Spearman rho,221,,0.354,,6.137755999366145e-08
