@@ -145,4 +145,31 @@ pB <- ggplot(dfg, aes(SBS4, beta)) +
   theme_bw(base_size = 11)
 ggsave("results/figures/08_top_gene_methylation_vs_SBS4.png", pB, width = 7, height = 5, dpi = 150)
 
+
+# ---------------------------------------------------------------------------
+# 4. Sensitivity check - technical batch / tissue source site
+# ---------------------------------------------------------------------------
+# TCGA samples come from many hospitals (tissue source site, TSS = characters
+# 6-7 of the barcode). Sites differ in sample handling and processing batch,
+# which can shift methylation. We repeat Part B with TSS as an extra covariate
+# (sites with < 5 tumours pooled as "other") and count how many genes remain.
+# Tumour purity estimates are not part of this cBioPortal study, so purity
+# itself could not be adjusted for (see README limitations).
+smp_B$TSS <- substr(smp_B$PATIENT_ID, 6, 7)
+tab_tss   <- table(smp_B$TSS)
+smp_B$TSS[smp_B$TSS %in% names(tab_tss)[tab_tss < 5]] <- "other"
+smp_B$TSS <- factor(smp_B$TSS)
+designC <- model.matrix(~ SBS4_rel + ever_smoker + age + SEX + TSS, data = smp_B)
+fitC    <- eBayes(lmFit(M[, keep], designC))
+resC    <- topTable(fitC, coef = "SBS4_rel", number = Inf, sort.by = "P")
+resC$gene <- rownames(resC)
+write.csv(resC, "results/tables/methylation_vs_SBS4_limma_TSS_adjusted.csv", row.names = FALSE)
+sigC <- resC$gene[resC$adj.P.Val < 0.05]
+cat("\nSensitivity (adds tissue source site,", nlevels(smp_B$TSS), "levels):\n")
+cat("genes associated with SBS4 share (FDR < 0.05):", length(sigC), "\n")
+cat("of the", length(sigB), "main Part B genes, still significant:", length(intersect(sigB, sigC)), "\n")
+cat("same direction of effect for the main Part B genes:",
+    round(100 * mean(sign(resB[sigB, "logFC"]) == sign(resC[sigB, "logFC"])), 1), "%\n")
+cat("rank of SEL1L3 / FOXI1:", match("SEL1L3", resC$gene), "/", match("FOXI1", resC$gene), "\n")
+
 cat("\nDone. Tables in results/tables, figures in results/figures\n")

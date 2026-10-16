@@ -1,0 +1,6 @@
+k,SBS4_cosine_median,SBS4_cosine_min,stability_across_seeds,reconstruction_error,median_tumour_reconstruction_cosine
+2,0.948,0.948,0.998,339.515,0.895
+3,0.963,0.949,0.999,302.435,0.903
+4,0.965,0.963,0.999,263.28,0.905
+5,0.968,0.968,1.0,252.274,0.908
+6,0.978,0.978,1.0,243.89,0.915

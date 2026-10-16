@@ -6,6 +6,12 @@ Author: Andleeb Zahra · 2026
 
 > All code, results and data files are in the folder [`lung-cancer-tobacco-footprints`](lung-cancer-tobacco-footprints). To run the analysis, open that folder first.
 
+## Central hypothesis
+
+**If tobacco smoke damages DNA directly, the damage should be readable in the tumour as one connected footprint:** a specific mutation pattern (SBS4), a higher mutation load, and epigenetic changes that scale with the amount of tobacco mutation in the same tumour, not only with smoking history. Each analysis below tests one part of this idea: steps 01–02 test the mutation pattern, step 03 asks whether this damage goes together with different driver genes and genome instability, and step 04 asks whether the epigenome follows the mutational footprint.
+
+This project grew out of my MS thesis, where I studied genetic susceptibility to an environmental exposure (fluoride) with a single genetic marker. Here I wanted to learn how an exposure can be traced across the whole genome and epigenome.
+
 ## Question
 
 Tobacco smoke contains mutagens such as benzo[a]pyrene. Do these leave a measurable "footprint" in lung tumours? I looked at three layers of the tumour genome:
@@ -32,6 +38,7 @@ COSMIC v3.2 SBS reference signatures (GRCh37) are included in `data/reference/`.
 |---|---|---|
 | 01 | Python | Built the 96-channel trinucleotide mutation matrix (pyrimidine-centred); calculated TMB and C>A fraction |
 | 02 | Python | De novo signature extraction with NMF (k = 3, scikit-learn); refitting of 7 COSMIC signatures per tumour with non-negative least squares (NNLS); Mann–Whitney, Kruskal–Wallis and Spearman tests |
+| 02b | Python | Robustness of the de novo signature: k = 2–6, 20 random initialisations per k, reconstruction error, refit quality |
 | 03 | Python | Driver mutations, ever- vs never-smokers (Fisher's exact test, Benjamini–Hochberg FDR); copy-number burden vs TP53 status |
 | 04 | R | limma on M-values: (A) ever vs never, adjusted for age and sex; (B) methylation vs SBS4 share, adjusted for smoking status, age and sex; volcano and scatter plots (ggplot2) |
 
@@ -43,6 +50,7 @@ COSMIC v3.2 SBS reference signatures (GRCh37) are included in `data/reference/`.
 - Ever-smokers had about 3.6× higher TMB than never-smokers (median 6.8 vs 1.9 mut/Mb; p = 5 × 10⁻¹¹).
 - C>A fraction was 0.36 in ever-smokers vs 0.11 in never-smokers (p = 2 × 10⁻¹²).
 - SBS4 share was 46% in ever-smokers vs 6% in never-smokers (p = 2 × 10⁻⁹).
+- **Robustness:** an SBS4-like signature was recovered at every number of signatures tested (k = 2–6; cosine to SBS4 0.95–0.98) and was stable across 20 random initialisations (mean pairwise cosine ≥ 0.998). The COSMIC refit reconstructed tumour spectra with a median cosine of 0.89 (tumours with ≥ 30 SNVs), so exposures in individual low-mutation tumours should be read with caution.
 - The order Never < Former < Current was clear (Kruskal–Wallis p = 1 × 10⁻⁹).
 - SBS4 rose only weakly with pack-years (Spearman ρ = 0.20, p = 0.01). Self-reported pack-years are noisy.
 
@@ -64,6 +72,7 @@ COSMIC v3.2 SBS reference signatures (GRCh37) are included in `data/reference/`.
 - 249 genes tracked the tumour's own SBS4 share even after adjusting for smoking status, age and sex; 20 genes were significant in both analyses.
 - The top SBS4-linked genes were SEL1L3 (higher methylation with more tobacco mutations) and FOXI1 (lower methylation).
 - Because Part B is adjusted for smoking status, these genes follow the amount of tobacco mutation in the tumour, not just whether the patient smoked.
+- **Sensitivity check:** adding the tissue source site (hospital / processing batch) as a covariate kept 202 of the 249 genes significant, all with the same direction of effect; SEL1L3 and FOXI1 stayed among the top 3. Tumour purity could not be adjusted for, so these remain associations.
 
 ## Main figures
 
@@ -82,10 +91,25 @@ COSMIC v3.2 SBS reference signatures (GRCh37) are included in `data/reference/`.
 ## Limitations
 
 - **Observational data.** These are associations, not causes.
-- **Tumour purity and immune infiltration** may differ between groups and can shift bulk methylation. Purity was not adjusted for.
+- **Tumour purity and immune infiltration** may differ between groups and can shift bulk methylation. Purity estimates are not part of this cBioPortal study, so purity was not adjusted for; tissue source site was tested as a batch proxy (see results). An association between methylation and SBS4 does not show that tobacco mutations cause these methylation changes.
 - **Gene-level methylation** uses one summary value per gene, so CpG-level effects are lost.
 - **Small never-smoker group** (32 with mutation data), so power for the driver-gene tests is limited.
 - **TMB is approximate** (mutations / 38 Mb exome). Signature refitting is unstable for tumours with fewer than 30 SNVs, so these were excluded.
+
+## Robustness figure
+
+![Signature robustness](lung-cancer-tobacco-footprints/results/figures/09_signature_robustness.png)
+
+## What I did myself
+
+- Chose the question and the public dataset, and decided which comparisons to make (smokers vs never-smokers; methylation vs SBS4 share).
+- Wrote the code with the help of an AI coding assistant, ran every step myself, and checked the outputs against the figures and tables.
+- Added the checks that a reviewer would ask for: adjusting Part B for smoking status, testing signature robustness across k and random starts, and a batch sensitivity check.
+- Interpreted the results and wrote the limitations.
+
+## Software versions
+
+Python 3.13 with numpy 2.5.3, pandas 3.0.5, scipy 1.18.1, matplotlib 3.11.2, scikit-learn 1.9.1 (pinned in `requirements.txt`); R 4.3.3 with limma 3.58.1 and ggplot2 3.4.4.
 
 ## How to run
 
@@ -102,6 +126,7 @@ On Windows (Anaconda Prompt), run the steps one by one from inside the `lung-can
 python python/00_download_data.py
 python python/01_build_tables.py
 python python/02_mutational_signatures.py
+python python/02b_signature_robustness.py
 python python/03_drivers_and_instability.py
 Rscript R/04_methylation_smoking.R
 ```
